@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import butter
-from Sim_waves import sine_wave
-
+from sim_waves import sine_wave
+import copy
 """
 可能潜藏着的问题：
 1. 生成的噪声是否需要考虑noise_freq和nosie_duration
@@ -213,3 +213,68 @@ def powerline_noise(
     powerline_noise *= powerline_amplitude
 
     return powerline_noise
+
+def add_echo(signal, n_echo, attenuation_factor, delay_factor):
+    if type(attenuation_factor) != list and type(attenuation_factor) != np.ndarray:
+        raise ValueError("type of attenuation_factor must be list or numpy.ndarray")
+    if type(delay_factor) != list and type(delay_factor) != np.ndarray:
+        raise ValueError("type of delay_factor must be list or numpy.ndarray")
+
+    if len(attenuation_factor) != n_echo or len(delay_factor) != n_echo:
+        raise ValueError("len(attenuation_factor) and len(delay_factor) should be equal to n_echo")
+
+    original_signal = signal.copy()
+    for a_factor, d_factory in zip(attenuation_factor, delay_factor):
+        attenuation_signal = original_signal * a_factor
+        attenuation_signal[:-d_factory] = attenuation_signal[d_factory:]
+        attenuation_signal[-d_factory:] = 0
+        original_signal += attenuation_signal
+
+    return original_signal
+
+def click_noise(signal, noise_amplitude, n_click):
+
+    signal_sd = np.std(signal, ddof=1)
+    amp = signal_sd * noise_amplitude
+    noise_pos = (np.random.uniform(0, len(signal), n_click)).astype(int)
+    mask = np.zeros(len(signal))
+    mask[noise_pos] = 1
+    _click_noise = np.random.normal(0, amp, len(signal)) * mask
+
+    return _click_noise
+
+if __name__ == '__main__':
+
+    from Dataset import load_scg
+    import matplotlib.pyplot as plt
+
+    signals_clean, labels_clean, duration, fs = load_scg(0, 'train')
+    signal = signals_clean[0]
+
+    sampling_rate = fs
+
+    attenuation_factor = [0.9, 0.9]
+    delay_factor = [5, 10]
+
+    attenuated_signal = add_echo(signal, 2, attenuation_factor, delay_factor)
+
+    plt.subplots(2, 1, figsize=(12, 8))
+    plt.subplot(2, 1, 1)
+    plt.plot(signal)
+    plt.title("Original Clean Signal")
+
+    plt.subplot(2, 1, 2)
+    plt.plot(attenuated_signal)
+    plt.title("Signal with Echo and Multi-path Reflections")
+    plt.show()
+
+    plt.subplots(2, 1, figsize=(12, 8))
+    plt.subplot(2, 1, 1)
+    plt.plot(signal)
+    plt.title("Original Clean Signal")
+
+    plt.subplot(2, 1, 2)
+    plt.plot(signal + click_noise(signal, 1.5, 5))
+    plt.title("Signal with Click Noise")
+
+    plt.show()
