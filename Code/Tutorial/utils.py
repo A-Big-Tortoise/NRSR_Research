@@ -23,7 +23,7 @@ def plot_2vectors(label, pred, save=False, name=None):
 
     plt.scatter(np.arange(list2.shape[0]), list2[sorted_id], s=1, alpha=0.5, label=f'{name} prediction', color='blue')
     plt.scatter(np.arange(list1.shape[0]), list1[sorted_id], s=1, alpha=0.5, label=f'{name} label', color='red')
-    plt.legend()
+    plt.legend(loc='lower right')
 
     if save:
         if name is None:
@@ -32,3 +32,27 @@ def plot_2vectors(label, pred, save=False, name=None):
         print(f'Saved plot to {name}.jpg')
 
     plt.show()
+
+    # mylist = Kshapes_template_test
+    # filepath = '../Data/NewTry/Kshapes_templates_0.1_3000_test.csv'
+
+    # def write_csv(mylist, filepath):
+    #     import csv
+    #     with open(filepath, 'w', newline='') as file:
+    #         writer = csv.writer(file)
+    #         writer.writerow(mylist)
+
+    # def write_csv(filepath):
+    #     import csv
+    #     with open(filepath, 'r') as file:
+    #         reader = csv.reader(file)
+    #         # for row in reader:
+    #             # row
+    #             # print(row)
+    #     return reader
+
+    # write_csv(mylist, filepath)
+    # new_kshapes_train = read_csv(filepath)
+    # with open(filepath, 'w', newline='') as file:
+    #     writer = csv.writer(file)
+    #     writer.writerow(mylist)
