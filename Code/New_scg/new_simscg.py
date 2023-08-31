@@ -20,7 +20,8 @@ if __name__ == '__main__':
         S_min = int(sys.argv[3])
         S_max = int(sys.argv[4])
         random_seed = int(sys.argv[5])
-        data_file = sys.argv[6]
+        template = bool(sys.argv[6])
+        data_file = sys.argv[7]
 
     else:
         print(f"Usage: {sys.argv[0]} num_rows noise_level S_min S_max random_seed path_file \n where noise level (amplitude of the laplace noise).")
@@ -47,8 +48,7 @@ if __name__ == '__main__':
 
         print('hr:', heart_rate, 'rr:', respiratory_rate, 'sp:', systolic, 'dp:', diastolic)
         
-        data = scg_simulate(duration=duration, sampling_rate=fs, noise=noise, heart_rate=heart_rate, respiratory_rate=respiratory_rate, systolic=systolic, diastolic=diastolic, random_state=random_seed)
-        ## N + 6 size. 6 are [mat_int(here 0 for synthetic data), time_stamp, hr, rr, sbp, dbp]
+        data = scg_simulate(duration=duration, sampling_rate=fs, noise=noise, heart_rate=heart_rate, respiratory_rate=respiratory_rate, systolic=systolic, diastolic=diastolic, random_state=random_seed, template=template)
         simulated_data.append(list(data)+[0]+[ind]+[heart_rate]+[respiratory_rate]+[systolic]+[diastolic])
 
     simulated_data = np.asarray(simulated_data)
