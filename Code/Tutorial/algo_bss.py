@@ -1,6 +1,6 @@
 from sklearn.decomposition import FastICA, PCA
 
-def algo_bbs_ica(X, n_components):
+def algo_bss_ica(X, n_components):
     """
     Apply Independent Component Analysis (ICA) to the input data.
 
@@ -26,7 +26,7 @@ def algo_bbs_ica(X, n_components):
     return S_, A_
 
 
-def algo_bbs_pca(X, n_components):
+def algo_bss_pca(X, n_components):
     """
     Apply Principal Component Analysis (PCA) to the input data.
 
@@ -50,6 +50,10 @@ if __name__ == '__main__':
     from Dataset import load_scg
 
     signals, labels, duration, fs = load_scg(0.1, 'train')
+
+    # We simulate three people lying in bed, and there are three sensors detecting their SCG signals.
+    # For each sensor, it receives a combination of three SCG signals, each with a certain time delay
+    # and attenuation.
     s1 = signals[3]
     s2 = signals[4]
     s3 = signals[5]
@@ -61,11 +65,11 @@ if __name__ == '__main__':
     S /= S.std(axis=0)  # Standardize data
 
     # Mix data
-    A = np.array([[1, 0.8, 1], [0.5, 0.85, 1.0], [0.9, 1.0, 0.8]])  # Mixing matrix
+    A = np.array([[0.9, 0.8, 1], [0.5, 0.85, 1.0], [0.9, 0.6, 0.8]])  # Mixing matrix
     X = np.dot(S, A.T)  # Generate observations
 
-    S_, A_ = algo_bbs_ica(X, 3)
-    H = algo_bbs_pca(X, 3)
+    S_, A_ = algo_bss_ica(X, 3)
+    H = algo_bss_pca(X, 3)
 
     plt.figure()
 
@@ -74,7 +78,6 @@ if __name__ == '__main__':
     colors = ['red', 'steelblue', 'orange']
 
 
-    print(type(models), type(models[0]), type(models[2]), type(models[1]), type(models[3]))
     plt.figure(figsize=(16, 8))
     for ii, (model, name) in enumerate(zip(models, names), 1):
         plt.subplot(4, 1, ii)

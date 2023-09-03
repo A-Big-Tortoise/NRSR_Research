@@ -67,8 +67,8 @@
 | Seasonal Decompose                | &#10004;  | &#10004; |
 | Empirical wavelet transform (EWT) | &#10004;  | &#10004; |
 | Singular Spectrum Analysis (SSA)  | &#10004;  | &#10004; |
-| PCA based Blind source separation | &#10004;  | &#10008; |
-| ICA based Blind source separation | &#10004;  | &#10008; |
+| PCA based Blind source separation | &#10004;  | &#10004; |
+| ICA based Blind source separation | &#10004;  | &#10004; |
 
 
 

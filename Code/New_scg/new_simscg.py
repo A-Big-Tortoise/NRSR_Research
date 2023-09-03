@@ -14,19 +14,25 @@ from tqdm import tqdm
 
 if __name__ == '__main__':
 
-    if(len(sys.argv) >= 6):
+    if(len(sys.argv) >= 7):
         N = int(sys.argv[1])
         noise = float(sys.argv[2])
         S_min = int(sys.argv[3])
         S_max = int(sys.argv[4])
         random_seed = int(sys.argv[5])
-        template = bool(sys.argv[6])
-        data_file = sys.argv[7]
+        method = str(sys.argv[6])
+        template = str(sys.argv[7])
+        data_file = sys.argv[8]
 
     else:
-        print(f"Usage: {sys.argv[0]} num_rows noise_level S_min S_max random_seed path_file \n where noise level (amplitude of the laplace noise).")
-        print(f"Example: {sys.argv[0]} 100 0.5 90 180 43 ../data/simu.1000_6.npy")       
+        print(f"Usage: {sys.argv[0]} num_rows noise_level S_min S_max random_seed method template path_file \n where noise level (amplitude of the laplace noise).")
+        print(f"Example: {sys.argv[0]} 100 0.5 90 180 43 simple False ../data/simu.1000_6.npy")
         exit()
+
+    if template == 'True':
+        template = True
+    else:
+        template = False
 
     fs = 100
     duration = 10 # 10 seconds
@@ -48,7 +54,9 @@ if __name__ == '__main__':
 
         print('hr:', heart_rate, 'rr:', respiratory_rate, 'sp:', systolic, 'dp:', diastolic)
         
-        data = scg_simulate(duration=duration, sampling_rate=fs, noise=noise, heart_rate=heart_rate, respiratory_rate=respiratory_rate, systolic=systolic, diastolic=diastolic, random_state=random_seed, template=template)
+        data = scg_simulate(duration=duration, sampling_rate=fs, noise=noise, heart_rate=heart_rate,
+                            respiratory_rate=respiratory_rate, systolic=systolic, diastolic=diastolic,
+                            random_state=random_seed, method=method, template=template)
         simulated_data.append(list(data)+[0]+[ind]+[heart_rate]+[respiratory_rate]+[systolic]+[diastolic])
 
     simulated_data = np.asarray(simulated_data)

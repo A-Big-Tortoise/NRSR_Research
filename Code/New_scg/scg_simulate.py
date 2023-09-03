@@ -8,6 +8,7 @@ import scipy
 from signal_distort import signal_distort
 from signal_resample import signal_resample
 import matplotlib.pyplot as plt
+import pywt
 
 
 def scg_simulate(
@@ -49,28 +50,6 @@ def scg_simulate(
     array
         Vector containing the scg signal.
 
-    Examples
-    ----------
-    >>> import pandas as pd
-    >>> import neurokit2 as nk
-    >>>
-    >>> scg1 = nk.scg_simulate(duration=10, method="simple")
-    >>> scg2 = nk.scg_simulate(duration=10, method="scgsyn")
-    >>> pd.DataFrame({"scg_Simple": scg1,
-    ...               "scg_Complex": scg2}).plot(subplots=True) #doctest: +ELLIPSIS
-    array([<AxesSubplot:>, <AxesSubplot:>], dtype=object)
-
-    See Also
-    --------
-    rsp_simulate, eda_simulate, ppg_simulate, emg_simulate
-
-
-    References
-    -----------
-    - McSharry, P. E., Clifford, G. D., Tarassenko, L., & Smith, L. A. (2003). A dynamical model for
-    generating synthetic electrocardiogram signals. IEEE transactions on biomedical engineering, 50(3), 289-294.
-    - https://github.com/diarmaidocualain/scg_simulation
-
     """
     # Seed the random generator for reproducible results
     np.random.seed(random_state)
@@ -89,7 +68,19 @@ def scg_simulate(
             duration=duration, length=length, sampling_rate=sampling_rate, heart_rate=heart_rate,
             respiratory_rate=respiratory_rate, systolic=systolic, diastolic=diastolic, template=template
         )
+    # Coiflets, Biorthogonal
+    if method.lower() in ["symlets", "symlet", "sym"]:
+        scg = _scg_simulate_symlets(
+            duration=duration, length=length, sampling_rate=sampling_rate, heart_rate=heart_rate,
+            respiratory_rate=respiratory_rate, systolic=systolic, diastolic=diastolic, template=template
+        )
 
+    # Coiflets, Biorthogonal
+    if method.lower() in ["coiflets", "coiflet", "coif"]:
+        scg = _scg_simulate_coiflets(
+            duration=duration, length=length, sampling_rate=sampling_rate, heart_rate=heart_rate,
+            respiratory_rate=respiratory_rate, systolic=systolic, diastolic=diastolic, template=template
+        )
 
     # Add random noise
     if noise > 0:
@@ -166,6 +157,9 @@ def _scg_simulate_daubechies(
     cardiac = np.concatenate([cardiac_s, zero_signal, cardiac_d])
     # cardiac = scipy.signal.resample(cardiac, 100) # fix every cardiac length to 100
     cardiac = scipy.signal.resample(cardiac, cardiac_length)  # fix every cardiac length to 1000/heart_rate
+    template = False
+
+
     if template == False:
         # Caculate the number of beats in capture time period
         num_heart_beats = int(duration * heart_rate / 60)
@@ -177,6 +171,8 @@ def _scg_simulate_daubechies(
         scg = signal_resample(
             scg, sampling_rate=int(len(scg) / 10), desired_length=length, desired_sampling_rate=sampling_rate
         )
+        # print(scg.shape)
+
     elif template == True:
         scg = cardiac
         scg = scipy.signal.resample(scg, int(60 * sampling_rate / heart_rate))  # fix every cardiac length to 1000/heart_rate
@@ -199,9 +195,8 @@ def _scg_simulate_daubechies(
     #         scg[i] *= (rr_component[i] + 2 * seg_amp)
     #     elif scg[i] < 0:
     #         scg[i] *= (rr_component[i] + 2 * seg_amp)
-
-    # scg *= (rr_component + 2 * seg_amp)
-    scg *= seg_amp
+    scg *= (rr_component + 2 * seg_amp)
+    # scg *= seg_amp
     # plt.figure(figsize = (16,2))
     # plt.plot(scg)
 
@@ -213,3 +208,131 @@ def _scg_simulate_daubechies(
     # import pdb; pdb.set_trace()
     return scg
 
+# =============================================================================
+# Symlets
+# =============================================================================
+def _scg_simulate_symlets(
+        duration=10,
+        length=None,
+        sampling_rate=100,
+        heart_rate=70,
+        respiratory_rate=15,
+        systolic=120,
+        diastolic=80,
+        template=False):
+
+    cardiac_length = int(100 * sampling_rate / heart_rate)  # sampling_rate #
+
+    # ind = random.randint(17, 34)
+    # cardiac_s = scipy.signal.wavelets.daub(ind)
+    # cardiac_d = scipy.signal.wavelets.daub(ind) * 0.3 * diastolic / 80  # change height to 0.3
+
+    ind = random.randint(11, 21)
+    wavelet = np.array(pywt.DiscreteContinuousWavelet('sym'+str(ind)).rec_hi)
+    cardiac_s = wavelet
+    cardiac_d = wavelet * 0.3 * diastolic / 80
+
+    cardiac_s = scipy.signal.resample(cardiac_s, 100)
+    cardiac_d = scipy.signal.resample(cardiac_d, 100)
+
+    cardiac_s = cardiac_s[0:40]
+
+    distance = 180 - systolic  # systolic 81-180
+    # distance = cardiac_length - len(cardiac_s) - len(cardiac_d) - systolic # here 140 = 40 (cardiac_s) + 100 (cardiac_d) as below
+    zero_signal = np.zeros(distance)
+    cardiac = np.concatenate([cardiac_s, zero_signal, cardiac_d])
+    # cardiac = scipy.signal.resample(cardiac, 100) # fix every cardiac length to 100
+    cardiac = scipy.signal.resample(cardiac, cardiac_length)  # fix every cardiac length to 1000/heart_rate
+
+
+    if template == False:
+        # Caculate the number of beats in capture time period
+        num_heart_beats = int(duration * heart_rate / 60)
+
+        # Concatenate together the number of heart beats needed
+        scg = np.tile(cardiac, num_heart_beats)
+
+        # Resample
+        scg = signal_resample(
+            scg, sampling_rate=int(len(scg) / 10), desired_length=length, desired_sampling_rate=sampling_rate
+        )
+        # print(scg.shape)
+
+    elif template == True:
+        scg = cardiac
+        scg = scipy.signal.resample(scg, int(60 * sampling_rate / heart_rate))  # fix every cardiac length to 1000/heart_rate
+
+    ### add rr
+    num_points = duration * sampling_rate
+    x_space = np.linspace(0, 1, num_points)
+    seg_fre = respiratory_rate / (60 / duration)
+    seg_amp = max(scg) * 0.00001
+    rr_component = seg_amp * np.sin(2 * np.pi * seg_fre * x_space)
+
+    scg *= (rr_component + 2 * seg_amp)
+    # scg *= seg_amp
+
+    return scg
+
+
+# =============================================================================
+# Coflits
+# =============================================================================
+def _scg_simulate_coiflets(
+        duration=10,
+        length=None,
+        sampling_rate=100,
+        heart_rate=70,
+        respiratory_rate=15,
+        systolic=120,
+        diastolic=80,
+        template=False):
+
+    cardiac_length = int(100 * sampling_rate / heart_rate)  # sampling_rate #
+
+    ind = random.randint(3, 18)
+    wavelet = np.array(pywt.DiscreteContinuousWavelet('coif'+str(ind)).rec_hi)
+    cardiac_s = wavelet
+    cardiac_d = wavelet * 0.3 * diastolic / 80
+
+    cardiac_s = scipy.signal.resample(cardiac_s, 100)
+    cardiac_d = scipy.signal.resample(cardiac_d, 100)
+
+    cardiac_s = cardiac_s[0:40]
+
+    distance = 180 - systolic  # systolic 81-180
+    # distance = cardiac_length - len(cardiac_s) - len(cardiac_d) - systolic # here 140 = 40 (cardiac_s) + 100 (cardiac_d) as below
+    zero_signal = np.zeros(distance)
+    cardiac = np.concatenate([cardiac_s, zero_signal, cardiac_d])
+    # cardiac = scipy.signal.resample(cardiac, 100) # fix every cardiac length to 100
+    cardiac = scipy.signal.resample(cardiac, cardiac_length)  # fix every cardiac length to 1000/heart_rate
+
+
+    if template == False:
+        # Caculate the number of beats in capture time period
+        num_heart_beats = int(duration * heart_rate / 60)
+
+        # Concatenate together the number of heart beats needed
+        scg = np.tile(cardiac, num_heart_beats)
+
+        # Resample
+        scg = signal_resample(
+            scg, sampling_rate=int(len(scg) / 10), desired_length=length, desired_sampling_rate=sampling_rate
+        )
+        # print(scg.shape)
+
+    elif template == True:
+        scg = cardiac
+        scg = scipy.signal.resample(scg, int(60 * sampling_rate / heart_rate))  # fix every cardiac length to 1000/heart_rate
+
+    ### add rr
+    num_points = duration * sampling_rate
+    x_space = np.linspace(0, 1, num_points)
+    seg_fre = respiratory_rate / (60 / duration)
+    seg_amp = max(scg) * 0.00001
+    rr_component = seg_amp * np.sin(2 * np.pi * seg_fre * x_space)
+
+    scg *= (rr_component + 2 * seg_amp)
+    # scg *= seg_amp
+
+    return scg
