@@ -227,7 +227,7 @@ def _scg_simulate_symlets(
     # cardiac_s = scipy.signal.wavelets.daub(ind)
     # cardiac_d = scipy.signal.wavelets.daub(ind) * 0.3 * diastolic / 80  # change height to 0.3
 
-    ind = random.randint(11, 21)
+    ind = random.randint(6, 19)
     wavelet = np.array(pywt.DiscreteContinuousWavelet('sym'+str(ind)).rec_hi)
     cardiac_s = wavelet
     cardiac_d = wavelet * 0.3 * diastolic / 80
@@ -290,7 +290,7 @@ def _scg_simulate_coiflets(
 
     cardiac_length = int(100 * sampling_rate / heart_rate)  # sampling_rate #
 
-    ind = random.randint(3, 18)
+    ind = random.randint(3, 8)
     wavelet = np.array(pywt.DiscreteContinuousWavelet('coif'+str(ind)).rec_hi)
     cardiac_s = wavelet
     cardiac_d = wavelet * 0.3 * diastolic / 80
