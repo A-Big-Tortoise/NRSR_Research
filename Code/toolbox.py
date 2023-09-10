@@ -158,7 +158,10 @@ def compare_freq(sign1, sign2, sample_rate=100):
     plt.show()
 
 
-def load_2(path):
+def load_(path):
     data = np.load(path)
     signals, labels = data[:, :1000], data[:, 1000:]
     return signals, labels
+
+def standize_1d(signal):
+    return (signal - signal.mean()) / signal.std()
