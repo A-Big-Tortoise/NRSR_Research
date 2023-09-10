@@ -89,7 +89,7 @@ def scg_simulate(
             sampling_rate=sampling_rate,
             noise_amplitude=noise,
             noise_frequency=[5, 10, 100],
-            noise_shape="gaussian",
+            noise_shape="laplace",
             random_state=random_state,
             silent=True,
         )
