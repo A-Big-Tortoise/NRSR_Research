@@ -1196,6 +1196,18 @@ def wiener_filter(signal, noise, show=False):
     return filtered_signal
 
 if __name__ == '__main__':
+    # 1. help
+    # help add_white_noise
+
+    # 2. Use default parameters
+    # scg add_white_noise(signal=scg)
+
+    # 3. Use defined parameters
+    # scg add_white_noise(signal=scg,noise_amplitude=0.4,show=True)
+
+    # 4. input is function sequences
+    # scg add_white_noise(signal=scg,noise_amplitude=0.4,show=True) butter_bandpass_filter(signal=scg,show=True) eemd_decomposition(signal=scg,show=True)
+
     from Dataset import load_scg
 
     def check_arguments():
