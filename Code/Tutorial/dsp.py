@@ -1231,13 +1231,14 @@ if __name__ == '__main__':
     # 6. create complex wave
     # create sine_wave(amplitude=1,frequency=1,show=True)+square_wave(show=True)
 
-    # 7. use created waves as input
+    # 7. add some noises to created waves
     # create sine_wave(amplitude=1,frequency=1,show=True)+square_wave(show=True) add_white_noise(signal=scg,noise_amplitude=0.2,show=True)
 
     # 8. use created waves as input
     # create sine_wave(amplitude=1,frequency=1,show=True)+sine_wave(amplitude=2,frequency=2,show=True) add_white_noise(signal=scg,noise_amplitude=0.2,show=True) eemd_decomposition(signal=scg,show=True)
 
     from Dataset import load_scg
+    import os
 
     def check_arguments():
         pass
@@ -1318,6 +1319,7 @@ if __name__ == '__main__':
             middle_res = load_create_data(inputs[1])
             func_seq_start = 2
         return middle_res, func_seq_start
+
 
     middle_res = None
     while True:
