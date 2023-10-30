@@ -5,6 +5,8 @@
     <mapping directory="$PROJECT_DIR$/Code/Tutorial" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Source Codes/DeCom" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Source Codes/weighted-dynamic-time-warping" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/SourceCodes/DeCom" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/SourceCodes/weighted-dynamic-time-warping" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Tutorial" vcs="Git" />
   </component>
 </project>
