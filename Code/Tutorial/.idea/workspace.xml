@@ -5,8 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4041f1b4-5b94-4489-8737-9e2c5cf84252" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../Decompose/EMDs.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../template/K-Shape_with_trick.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DTW/DTW_framework_DBA.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../DTW/DTW_framework_DBA.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../KalmanFilter/KF.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../KalmanFilter/KF.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/decompose.py" beforeDir="false" afterPath="$PROJECT_DIR$/decompose.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../template/Peaks_NoNoise.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../template/Peaks_NoNoise.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,6 +85,7 @@
       <workItem from="1697457228617" duration="8134000" />
       <workItem from="1697972314571" duration="1583000" />
       <workItem from="1698310731475" duration="259000" />
+      <workItem from="1699272089361" duration="3129000" />
     </task>
     <servers />
   </component>
