@@ -193,7 +193,7 @@ def wdtw(x, y, weight_vector, sakoe_chiba_band, alpha):
     dist = np.empty((n, m))
     for i in range(n):
         for j in range(m):
-            dist[i][j]  = ( 1 / (pow(weight_vector[j],alpha)) ) * (x[i]-y[j])**2
+            dist[i][j] = (1 / (pow(weight_vector[j], alpha))) * (x[i]-y[j])**2
 
     # Cost Matrix with Sakoe-Chiba Band
     # -------------------------------------------------------------------------------------------
