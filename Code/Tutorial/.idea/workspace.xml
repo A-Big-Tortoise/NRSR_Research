@@ -5,12 +5,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4041f1b4-5b94-4489-8737-9e2c5cf84252" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../template/K-Shape_with_trick.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../DTW/DTW_framework_DBA.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../DTW/DTW_framework_DBA.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../KalmanFilter/KF.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../KalmanFilter/KF.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Frequency/Freq_150.ipynb" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Frequency/Freq_200.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Clustering.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DTW/DTW_framework_DBA.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../DTW/DBA.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DTW/DTW_framework_DBA_Noise.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../DTW/DBA_Noise.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DTW/KSC.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../DTW/KSC.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DTW/NLAAF.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../DTW/NLAAF.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../DTW/PSA.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../DTW/PSA.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../RealData/Implementation.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../RealData/Implementation.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/decompose.py" beforeDir="false" afterPath="$PROJECT_DIR$/decompose.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../template/Peaks_NoNoise.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/../template/Peaks_NoNoise.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Paper4Reference/2023/BedDot_HRRRIBI_accepted.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/../../Paper4Reference/2023/BedDot_HRRRIBI_accepted.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Paper4Reference/Get Template/Time-Serious Average/GTW.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/../../Paper4Reference/Get Template/Time-Serious Average/GTW.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Paper4Reference/Get Template/Time-Serious Average/NOT SURE/Nonsmooth Analysis and Subgradient Methods for Averaging in DTW Spaces.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Paper4Reference/Get Template/Time-Serious Average/SSG.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/../../Paper4Reference/Get Template/Time-Serious Average/SSG.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Paper4Reference/Get Template/Time-Serious Average/Time-series averaging using constrained dynamic time warping with tolerance.pdf" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,10 +49,33 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.notebooks.jupyter.connections.configuration.JupyterServerConfigurable&quot;
   }
 }</component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.add_noises">
+    <configuration name="add_noises" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Tutorial" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/algos" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/algos/add_noises.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="decompose" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Tutorial" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -68,6 +100,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.add_noises" />
         <item itemvalue="Python.decompose" />
       </list>
     </recent_temporary>
@@ -86,6 +119,10 @@
       <workItem from="1697972314571" duration="1583000" />
       <workItem from="1698310731475" duration="259000" />
       <workItem from="1699272089361" duration="3129000" />
+      <workItem from="1700619446279" duration="4378000" />
+      <workItem from="1700639529931" duration="4987000" />
+      <workItem from="1700644658589" duration="947000" />
+      <workItem from="1700717881799" duration="8000" />
     </task>
     <servers />
   </component>
@@ -102,5 +139,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Tutorial$decompose.coverage" NAME="decompose Coverage Results" MODIFIED="1697973065349" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Tutorial$add_noises.coverage" NAME="add_noises Coverage Results" MODIFIED="1700620109749" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/algos" />
   </component>
 </project>

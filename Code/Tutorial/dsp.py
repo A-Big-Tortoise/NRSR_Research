@@ -1,13 +1,17 @@
 import numpy as np
-from scipy.signal import butter
-from sim_waves import sine_wave
+# from sim_waves import sine_wave
 from PyEMD import EEMD, EMD, CEEMDAN
 from vmdpy import VMD
 from statsmodels.tsa.seasonal import seasonal_decompose
 import matplotlib.pyplot as plt
 import scipy.signal
-from scipy.signal import butter, lfilter
-from utils import plot_sim_waves, plot_noise_signal, plot_decomposed_components, plot_filtered_signal
+from scipy.signal import butter, lfilter, iirnotch, correlate
+import padasip as pa
+from dsp_utils import plot_sim_waves, plot_noise_signal, plot_decomposed_components, plot_filtered_signal
+import pywt
+
+
+
 from Dataset import load_scg
 import os
 # ==============================================================================
@@ -217,7 +221,7 @@ def chirp_wave_hyperbolic(duration=10, sampling_rate=100, f0=1, f1=10, phase=0, 
     if sampling_rate / 2 <= f0 or sampling_rate / 2 <= f1:
         raise ValueError(f"Sampling rate is {sampling_rate} and Initial Frequency is {f0} and Final Frequency {f1}. Nyquist Error!")
 
-    chirp_wave = np.sin(phase + 2 * np.pi * ((-1 * f0 * f1 * time) / (f1 - f0) * np.log(1 - (f1 - f0) / (f1 * time) * time)))
+    chirp_wave = np.sin(phase + 2 * np.pi * ((-1 * f0 * f1 * duration) / (f1 - f0) * np.log(1 - (f1 - f0) / (f1 * duration) * time)))
 
     if show:
         plot_sim_waves(chirp_wave, 'Chirp Wave Hyperbolic')
@@ -317,7 +321,7 @@ def add_white_noise(signal, noise_amplitude=0.1, model=0, show=False):
 
 # 和上面的白噪声一样，没有考虑过noise_freq和noise_duration，可能后期需要大改
 def add_band_limited_white_noise(
-        signal, noise_amplitude=0.1, sampling_rate=100, lowcut=0.1, highcut=5, order=4, show=False
+        signal, noise_amplitude=0.1, sampling_rate=100, lowcut=0.1, highcut=5, order=3, show=False
 ):
     """
     Add band-limited white noise to a signal.
@@ -355,7 +359,7 @@ def add_band_limited_white_noise(
     b, a = butter(order, [lowcut, highcut], btype='band', fs=sampling_rate)
 
     # Apply the bandpass filter to the generated white noise
-    _band_limited_noise = signal.lfilter(b, a, _noise)
+    _band_limited_noise = lfilter(b, a, _noise)
 
     # Add the band-limited noise to the input signal
     noisy_signal = _band_limited_noise + signal
@@ -368,7 +372,7 @@ def add_band_limited_white_noise(
 
 
 def add_impulsive_noise(
-        signal, noise_amplitude=0.1, rate=None, number=None, show=False
+        signal, noise_amplitude=1, rate=None, number=None, show=False
 ):
     """
     Add impulsive noise to a signal.
@@ -413,7 +417,7 @@ def add_impulsive_noise(
     impulsive_noise = np.random.choice([0, 1], size=num_samples, p=pob) * np.random.normal(0, amp, num_samples)
 
     # Add the impulsive noise to the input signal
-    noisy_signal = impulsive_noise + signal
+    noisy_signal = np.abs(impulsive_noise) + signal
 
     if show:
         # If requested, plot the original and noisy signals
@@ -423,7 +427,7 @@ def add_impulsive_noise(
 
 
 def add_burst_noise(
-    signal, noise_amplitude=0.1, burst_num_max=1, burst_durations=[10, 50], burst_intervals=[100, 300], show=False
+        signal, noise_amplitude=0.3, burst_num_max=1, burst_durations=[10, 100], show=False
 ):
     """
     Add burst noise to a signal.
@@ -463,17 +467,15 @@ def add_burst_noise(
 
     # Generate burst noise events based on specified parameters
     for _ in range(burst_num_max):
-        burst_duration = np.random.uniform(burst_durations[0], burst_durations[1])
+        burst_duration = np.random.randint(burst_durations[0], burst_durations[1])
         burst_end = burst_start + burst_duration
 
         if burst_end >= signal_length:
-            break
+            burst_end = signal_length
 
-        burst_interval = np.random.uniform(burst_intervals[0], burst_intervals[1])
-        burst_start = burst_end + burst_interval
+        burst_end = burst_start + burst_duration
 
-        # Add Gaussian noise to the burst noise region
-        _noise[burst_start: burst_end] += np.random.normal(0, amp)
+        _noise[burst_start: burst_end] += np.random.normal(0, amp, size=burst_end-burst_start)
 
     # Add the burst noise to the input signal
     noisy_signal = _noise + signal
@@ -500,7 +502,7 @@ def spectral_density(frequency_range, magnitude=1, noise_exponent=1):
     return magnitude / (frequency_range ** noise_exponent)
 
 def add_colored_noise(
-        signal, sampling_rate=100, duration=10, noise_max=1, model=0, show=False
+        signal, noise_amplitude=0.3, model=0, sampling_rate=100, duration=10,  show=False
 ):
     """
     Add colored noise to a signal.
@@ -508,12 +510,12 @@ def add_colored_noise(
     Parameters:
     signal : array-like
         The input signal to which colored noise will be added.
+    noise_amplitude : float, optional
+        The amplitude of the noise.
     sampling_rate : int, optional
         The sampling rate of the audio signal.
     duration : float, optional
         Duration of the colored noise signal in seconds.
-    noise_max : float, optional
-        Maximum desired amplitude of the colored noise.
     model : int, optional
         The type of colored noise to generate:
         - 0: Pink noise
@@ -550,8 +552,7 @@ def add_colored_noise(
     _colored_noise = np.fft.irfft(spectrum, n=num_samples)
 
     # Scale the colored noise to achieve the desired maximum amplitude
-    scaling = _colored_noise.max() / noise_max
-    _colored_noise /= scaling
+    _colored_noise *= np.max(signal) * noise_amplitude
 
     # Add the colored noise to the input signal
     noisy_signal = _colored_noise + signal
@@ -564,7 +565,7 @@ def add_colored_noise(
 
 
 def add_flicker_noise(
-        signal, sampling_rate=100, duration=10, magnitude=1, noise_exponent=1, noise_max=1, show=False
+        signal, noise_amplitude=0.3, sampling_rate=100, duration=10, magnitude=1, noise_exponent=1, show=False
 ):
     """
     Add flicker (1/f) noise to a signal.
@@ -572,6 +573,8 @@ def add_flicker_noise(
     Parameters:
     signal : array-like
         The input signal to which flicker noise will be added.
+    noise_amplitude : float, optional
+        The amplitude of the burst noise.
     sampling_rate : int, optional
         The sampling rate of the audio signal.
     duration : float, optional
@@ -580,8 +583,6 @@ def add_flicker_noise(
         Magnitude of the flicker noise.
     noise_exponent : float, optional
         Exponent determining the slope of the spectral density.
-    noise_max : float, optional
-        Maximum desired amplitude of the flicker noise.
     show : bool, optional
         Whether to display a plot of the noisy signal.
 
@@ -605,8 +606,7 @@ def add_flicker_noise(
     _flicker_noise = np.fft.irfft(spectrum, n=num_samples)
 
     # Scale the flicker noise to achieve the desired maximum amplitude
-    scaling = _flicker_noise.max() / noise_max
-    _flicker_noise /= scaling
+    _flicker_noise *= np.max(signal) * noise_amplitude
 
     # Add the flicker noise to the input signal
     noisy_signal = _flicker_noise + signal
@@ -618,7 +618,7 @@ def add_flicker_noise(
     return noisy_signal
 
 def add_thermal_noise(
-        signal, sampling_rate=100, duration=10, Temperature=100, noise_max=1, show=False
+        signal, noise_amplitude=0.3, sampling_rate=100, duration=10, Temperature=100, show=False
 ):
     """
     Add thermal noise to a signal.
@@ -626,14 +626,14 @@ def add_thermal_noise(
     Parameters:
     signal : array-like
         The input signal to which thermal noise will be added.
+    noise_amplitude : float, optional
+        The amplitude of the burst noise.
     sampling_rate : int, optional
         The sampling rate of the audio signal.
     duration : float, optional
         Duration of the thermal noise signal in seconds.
     Temperature : float, optional
         Temperature in Kelvin, used to calculate thermal noise.
-    noise_max : float, optional
-        Maximum desired amplitude of the thermal noise.
     show : bool, optional
         Whether to display a plot of the noisy signal.
 
@@ -658,8 +658,7 @@ def add_thermal_noise(
     _thermal_noise = np.fft.irfft(spectrum, n=num_samples)
 
     # Scale the thermal noise to achieve the desired maximum amplitude
-    scaling = _thermal_noise.max() / noise_max
-    _thermal_noise /= scaling
+    _thermal_noise *= np.max(signal) * noise_amplitude
 
     # Add the thermal noise to the input signal
     noisy_signal = _thermal_noise + signal
@@ -703,9 +702,6 @@ def add_powerline_noise(
 
     # Calculate the standard deviation of the input signal
     signal_sd = np.std(signal, ddof=1)
-
-    # Generate a time array
-    time = np.linspace(0, duration, int(duration * sampling_rate))
 
     # Generate the powerline noise as a sine wave
     powerline_noise = sine_wave(duration=duration, sampling_rate=sampling_rate, amplitude=1, frequency=powerline_frequency, phase=0)
@@ -757,7 +753,7 @@ def add_echo_noise(
 
     # Create a copy of the original signal
     original_signal = signal.copy()
-
+    echos = np.zeros(shape=original_signal.shape)
     # Iterate over each echo and apply attenuation and delay
     for a_factor, d_factor in zip(attenuation_factor, delay_factor):
         # Apply attenuation to the signal
@@ -768,10 +764,10 @@ def add_echo_noise(
         attenuation_signal[:d_factor] = 0
 
         # Add the attenuated and delayed signal to the original signal
-        original_signal += attenuation_signal
+        echos += attenuation_signal
 
     # Combine the original signal with all the echoes to create the noisy signal
-    noisy_signal = original_signal + signal
+    noisy_signal = echos + signal
 
     if show:
         # If requested, plot the original and noisy signals
@@ -1180,7 +1176,7 @@ def exponential_moving_average_filter(signal, length=10, alpha=None, show=False)
 
     return filtered_signal
 
-def savgol_filter(signal, window_length=64, polyorder=1, show=False):
+def savgol_filter(signal, window_length=32, polyorder=1, show=False):
     """
     Apply a Savitzky-Golay filter to the input signal for smoothing.
 
@@ -1244,164 +1240,203 @@ def wiener_filter(signal, noise, show=False):
 
     return filtered_signal
 
-if __name__ == '__main__':
-    # 1. help
-    # help add_white_noise
 
-    # 2. Use default parameters
-    # scg add_white_noise(signal=scg)
+def rls_filter(x, d, n, mu, show=False):
+    """
+    Apply Recursive Least Squares (RLS) filter to input signal x to estimate a desired signal d.
 
-    # 3. Use defined parameters
-    # scg add_white_noise(signal=scg,noise_amplitude=0.4,show=True)
+    Parameters:
+    - x: Input signal.
+    - d: Desired signal to be estimated.
+    - n: Order of the filter.
+    - mu: Convergence factor.
 
-    # 4. input is function sequences
-    # scg add_white_noise(signal=scg,noise_amplitude=0.4,show=True) butter_bandpass_filter(signal=scg,show=True) eemd_decomposition(signal=scg,show=True)
+    Returns:
+    - y: Output signal (estimated signal).
+    - e: Error signal (difference between estimated and desired signals).
+    - w: Filter weights after processing the signals.
+    """
+    x_np = np.array(x)
+    d_np = np.array(d)
 
-    # -------------------------------------------------------------------------------------------
-    # 5. create simple wave
-    # create sine_wave(amplitude=1,frequency=1,show=True)
+    # Ensure x and d are 2D arrays
+    if x_np.ndim == 1:
+        x_np = x_np.reshape(-1, 1)
+    if d_np.ndim == 1:
+        d_np = d_np.reshape(-1, 1)
 
-    # 6. create complex wave
-    # create sine_wave(amplitude=1,frequency=1,show=True)+square_wave(show=True)
+    # Create an RLS filter with specified parameters
+    f = pa.filters.FilterRLS(n=n, mu=mu, w="random")
 
-    # 7. add some noises to created waves
-    # create sine_wave(amplitude=1,frequency=1,show=True)+sine_wave(amplitude=2,frequency=2,show=True) add_white_noise(signal=scg,noise_amplitude=0.2,show=True)
+    # Run the RLS filter on the input and desired signals
+    y, e, w = f.run(d_np, x_np)
 
-    # 8. use created waves as input to the algorithm
-    # create sine_wave(amplitude=1,frequency=1,show=True)+sine_wave(amplitude=2,frequency=2,show=True) add_white_noise(signal=scg,noise_amplitude=0.2,show=True) eemd_decomposition(signal=scg,show=True)
+    if show:
+        plot_filtered_signal(y, x, "Recursive Least Squares (RLS) Filter")
 
-    # 9. save the data
-    # save ./data
+    return y, e, w
 
 
-    def check_arguments():
-        pass
+def lms_filter(x, d, n, mu, show=False):
+    """
+    Apply Least Mean Squares (LMS) filter to input signal x to estimate a desired signal d.
 
-    def get_params(func_sequence, pattern = r'\((.*?)\)'):
-        # func_sequence: ['func1(a=1,b=4)', 'func1(a=2,b=2)', 'func2(a=1,b=3)', 'func2(a=1,b=3)']
-        import re
+    Parameters:
+    - x: Input signal.
+    - d: Desired signal to be estimated.
+    - n: Order of the filter.
+    - mu: Convergence factor.
 
-        params = []
-        for input_str in func_sequence:
-            print(input_str)
-            match = re.search(pattern, input_str)
-            if match:
-                parameters_str = match.group(1)
-                parameters_list = parameters_str.split(',')
-                parameters_list = [param.strip() for param in parameters_list]
-                if parameters_list == ['']:
-                    parameters_dic = None
-                else:
-                    parameters_dic = {}
-                    for paramters in parameters_list:
-                        check_arguments()
-                        paramters_splits = paramters.split('=')
-                        if paramters_splits[0] == 'signal':
-                            continue
-                        if paramters_splits[0] == 'show':
-                            parameters_dic[paramters_splits[0]] = True if paramters_splits[-1] == 'true' else False
-                            continue
-                        parameters_dic[paramters_splits[0]] = float(paramters_splits[-1])
-                params.append([input_str.split('(')[0], parameters_dic])
-            else:
-                params.append([input_str.split('(')[0], None])
-        return params
+    Returns:
+    - y: Output signal (estimated signal).
+    - e: Error signal (difference between estimated and desired signals).
+    - w: Filter weights after processing the signals.
+    """
+    x_np = np.array(x)
+    d_np = np.array(d)
 
-    def check_callable(func_name):
-        func = globals()[func_name]
-        if func is not None and callable(func):
-            return True
-        else:
-            print(f"函数 '{func_name}' 未找到或不可调用。")
-            print(f"")
-            return False
+    # Ensure x and d are 2D arrays
+    if x_np.ndim == 1:
+        x_np = x_np.reshape(-1, 1)
+    if d_np.ndim == 1:
+        d_np = d_np.reshape(-1, 1)
 
-    def load_scg_data():
-        signals_train, labels_train, duration, fs =  load_scg(0.1, 'train')
-        return signals_train[0]
+    # Create an LMS filter with specified parameters
+    f = pa.filters.FilterLMS(n=n, mu=mu, w="random")
 
-    def load_create_data(func_sequence_str):
-        func_sequence = func_sequence_str.split('+')
-        funcname_params = get_params(func_sequence)
-        middle_res = np.zeros(1000)
+    # Run the LMS filter on the input and desired signals
+    y, e, w = f.run(d_np, x_np)
 
-        # iterate dic
-        for func_name, params in funcname_params:
-            if not check_callable(func_name):
-                break
-            func = globals()[func_name]
-            middle_res += func(**params)
+    if show:
+        plot_filtered_signal(y, x, "Least Mean Squares (LMS) Filter")
 
+    return y, e, w
+
+def notch_filter(signal, cutoff=10, q=10, fs=100, show=False):
+    """
+    Apply a Notch Filter to Remove Interference at a Specific Frequency.
+
+    Args:
+        signal (array-like): The input signal to be filtered.
+        cutoff (float, optional): The center frequency to be removed (in Hz). Default is 10 Hz.
+        q (float, optional): The quality factor or Q factor of the filter. Higher values result in narrower notches. Default is 10.
+        fs (float, optional): The sampling frequency of the input signal (in Hz). Default is 100 Hz.
+
+    Returns:
+        array-like: The filtered signal with the specified frequency removed.
+
+    Notes:
+        - This function uses SciPy's IIR notch filter implementation to suppress interference at the specified frequency.
+        - The notch filter is used to eliminate a narrow frequency band around the 'cutoff' frequency.
+        - The 'q' parameter controls the width of the notch; higher 'q' values create narrower notches.
+
+    Example:
+        >>> import numpy as np
+        >>> from scipy.signal import lfilter
+        >>> noisy_signal = np.sin(2 * np.pi * 50 * np.linspace(0, 1, 1000)) + 0.5 * np.random.randn(1000)
+        >>> filtered_signal = notch_filter(noisy_signal, cutoff=50, q=30, fs=1000)
+    """
+    # Create an IIR Notch filter with specified parameters
+    b, a = iirnotch(cutoff, q, fs)
+
+    # Apply the Notch filter to the input signal
+    filtered_signal = lfilter(b, a, signal)
+
+    if show:
+        plot_filtered_signal(filtered_signal, signal, "Notch Filter")
+
+    return filtered_signal
+
+def matched_filter(signal, template, show=False):
+    """
+    Apply matched filter to a signal using a template.
+
+    Parameters:
+    - signal: The input signal.
+    - template: The template signal.
+
+    Returns:
+    - filtered_output: The output of the matched filter.
+    """
+    # Ensure inputs are numpy arrays
+    signal = np.array(signal)
+    template = np.array(template)
+
+    # Reverse the template signal
+    template = np.flip(template)
+
+    # Perform convolution using numpy's convolve function
+    filtered_signal = np.convolve(signal, template, mode='full')
+
+    if show:
         plt.figure()
-        plt.plot(middle_res, label='Created Signal')
-        plt.title('Created Wave')
+        plt.plot(filtered_signal, label='Filtered Signal')
+        plt.title("Matched Filter")
         plt.legend()
         plt.show()
-        return middle_res
 
-    def check_and_load_data(inputs):
-        data_sources = ['scg', 'create']
-        middle_res = None
-        func_seq_start = -1
-
-        if inputs[0] not in data_sources:
-            return None, None
-        elif inputs[0] == 'scg':
-            middle_res = load_scg_data()
-            func_seq_start = 1
-        elif inputs[0] == 'create':
-            middle_res = load_create_data(inputs[1])
-            func_seq_start = 2
-        return middle_res, func_seq_start
+    return filtered_signal
 
 
-    middle_res = None
-    while True:
-        inputs = input("Enter your command: ").lower().split(' ')
+def fft_denoise(signal, threshold, show=False):
+    """
+    Applies FFT-based denoising to a signal.
 
-        # quit
-        if inputs[0] in ['q', 'quit']:
-            print('quit')
-            break
-        if 'q' in inputs or 'quit' in inputs:
-            print('quit')
-            break
+    Parameters:
+    signal (array-like): Input signal to be denoised.
+    threshold (float): Threshold for filtering out noise.
 
-        # help
-        if inputs[0] in ['h', 'help']:
-            for i in range(1, len(inputs)):
-                func_name = inputs[i]
-                print(help(globals()[func_name]))
-            continue
+    Returns:
+    array-like: Denoised signal after applying FFT-based denoising.
+    """
 
-        if inputs[0] in ['s', 'save']:
-            file_path = inputs[1]
-            default_path = os.path.join('data')
-            if middle_res is None:
-                print('There is nothing needed to save!')
-            else:
-                if os.path.exists(file_path):
-                    final_path = file_path
-                else:
-                    final_path = default_path
-                np.save(final_path, middle_res)
-            continue
+    num_samples = len(signal)  # Length of the input signal
+    fhat = np.fft.fft(signal)  # Compute the FFT of the signal
+    psd = fhat * np.conjugate(fhat) / num_samples  # Compute the power spectral density
+    indices = psd > threshold  # Identify indices above the threshold for filtering
+    fhat = indices * fhat  # Apply filtering to the FFT coefficients
+    ffilt = np.fft.ifft(fhat)  # Compute the inverse FFT
+    ffilt = ffilt.real  # Take the real part of the inverse FFT
 
-        func_seq_start = 1
+    if show:
+        plot_filtered_signal(ffilt, signal, "FFT Denoising")
 
-        middle_res, func_seq_start = check_and_load_data(inputs)
+    return ffilt
 
-        funcname_params = get_params(inputs[func_seq_start:])
 
-        # iterate dic
-        for func_name, params in funcname_params:
-            if not check_callable(func_name):
-                break
-            print(f'Function Name: {func_name}')
-            func = globals()[func_name]
-            params['signal'] = middle_res
-            print(f'Input shape of Function: {middle_res.shape}')
-            middle_res = func(**params)
-            print(f'Output shape of Function: {middle_res.shape}')
-            print()
-            # print(middle_res)
+def wavelet_denoise(data, method, threshold, show=False):
+    """
+    Applies wavelet-based denoising to the input data.
+
+    Parameters:
+    data (array-like): Input data to be denoised.
+    method (str): Wavelet transform method to be used. like 'sym4' and so on.
+    threshold (float): Threshold for filtering out noise.
+
+    Returns:
+    array-like: Denoised data after applying wavelet-based denoising.
+    """
+
+    # Create a Wavelet object using the specified method
+    w = pywt.Wavelet(method)
+
+    # Calculate the maximum decomposition level based on data length and wavelet length
+    maxlev = pywt.dwt_max_level(len(data), w.dec_len)
+
+    print("maximum level is " + str(maxlev))
+
+    # Perform wavelet decomposition on the input data up to the maximum level
+    coeffs = pywt.wavedec(data, method, level=maxlev)
+
+    # Loop through the wavelet coefficients (except the first one, which is the approximation)
+    for i in range(1, len(coeffs)):
+        # Apply thresholding to each coefficient by multiplying with a factor of the maximum coefficient
+        coeffs[i] = pywt.threshold(coeffs[i], threshold * max(coeffs[i]))
+
+    # Reconstruct the denoised data using the modified wavelet coefficients
+    datarec = pywt.waverec(coeffs, method)
+
+    if show:
+        plot_filtered_signal(datarec, data, "Wavelet Denoising")
+
+    return datarec
