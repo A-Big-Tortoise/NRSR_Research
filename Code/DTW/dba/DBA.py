@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 '''
+
 from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import reduce
-
 
 __author__ ="Francois Petitjean"
 
@@ -183,7 +183,7 @@ def main():
 
     #plotting the average series
     plt.figure()
-    plt.plot(range(0,len(average_series)), average_series)
+    plt.plot(range(0, len(average_series)), average_series)
     plt.show()
 
 if __name__== "__main__":
