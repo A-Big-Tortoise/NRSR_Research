@@ -22,6 +22,7 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 import re
+from Tutorial.Dataset  import load_scg
 
 
 # get_ipython().system(' pip install tsfel # installing TSFEL for feature extraction')
@@ -165,3 +166,18 @@ def load_(path):
 
 def standize_1d(signal):
     return (signal - signal.mean()) / signal.std()
+
+
+def load_simulated_data(noise_level=0):
+    signals_train, labels_train, duration, fs = load_scg(noise_level, 'train')
+    signals_test, labels_test, _, _ = load_scg(noise_level, 'test')
+
+    def filter_signals(signals, labels):
+        idx = np.any(signals > 1, axis=1)
+        return signals[~idx], labels[~idx]
+
+    filtered_signals_train, filtered_labels_train = filter_signals(signals_train, labels_train)
+    filtered_signals_test, filtered_labels_test = filter_signals(signals_test, labels_test)
+
+    print(filtered_signals_train.shape, filtered_labels_test.shape)
+    return filtered_labels_train, filtered_labels_test, filtered_signals_train, filtered_signals_test
