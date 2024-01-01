@@ -181,3 +181,14 @@ def load_simulated_data(noise_level=0):
 
     print(filtered_signals_train.shape, filtered_labels_test.shape)
     return filtered_labels_train, filtered_labels_test, filtered_signals_train, filtered_signals_test
+
+def load_simulated_data2(path):
+    data = np.load(path)
+    signals, labels = data[:, :1000], data[:, 1000:]
+
+    def filter_signals(signals, labels):
+        idx = np.any(signals > 1, axis=1)
+        return signals[~idx], labels[~idx]
+
+    filtered_signals, filtered_labels = filter_signals(signals, labels)
+    return filtered_labels, filtered_signals
